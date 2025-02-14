@@ -36,3 +36,212 @@
     transform: rotate(360deg);
   }
 }
+
+/*Login and Register page */
+/* General Page Styling */
+body {
+  background: linear-gradient(to right, #e36a6a, #fff);
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;  /* Changed from height: 125vh */
+  margin: 0;
+ padding: 20px;   /* Add some padding */
+  box-sizing: border-box;
+}
+
+/* Form Container */
+.container {
+  text-align: center;
+ padding: 20px; 
+  max-height: 100vh;  /* Limit height */
+  overflow-y: auto;   /* Allow vertical scrolling */
+}
+
+/* Heading */
+h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Input Fields */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  color: black;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s ease-in-out;
+}
+
+input:focus {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Buttons */
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Login & Register Button Colors */
+.login-btn {
+  background: black;
+  color: white;
+}
+
+.register-btn {
+  background: black;
+  color: white;
+}
+
+/* Error Messages */
+.error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* Links */
+a {
+  color: #ffcc00;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Home page */
+.home-container {
+  text-align: center;
+  padding: 20px;
+}
+
+.home-links {
+  margin-top: 20px;
+}
+
+.home-links ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.home-links li {
+  margin: 10px 0;
+}
+
+.home-links a {
+  text-decoration: none;
+  font-size: 18px;
+  color: #007bff;
+}
+
+.home-links a:hover {
+  color: #0056b3;
+}
+
+/* Dashboard, Admin, and Profile pages styling */
+
+.container {
+  text-align: center;
+  padding: 20px;
+}
+
+a {
+  text-decoration: none;
+  color: #000000;
+  margin: 10px;
+}
+
+a:hover {
+  color: #000000;
+}
+
+/* Update form styles to be more flexible */
+form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+  overflow-y: visible;  /* Ensure form content isn't cut off */
+  position: relative;   /* Add this */
+}
+
+label {
+  margin-top: 10px;
+}
+
+input, select, textarea {
+  padding: 8px;
+  margin-top: 5px;
+  width: 100%;  /* Make inputs fill the form width */
+  box-sizing: border-box;  /* Include padding in width calculation */
+}
+
+button {
+  margin-top: 20px;
+  padding: 10px;
+  background: #000000;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #e36a6a;
+}
+
+
+
+/* Notifications, Volunteer History, Volunteer Matching form */
+.notifications-container, .history-container, .volunteer-matching-container {
+  text-align: center;
+  padding: 20px;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  background: #fff;
+  padding: 10px;
+  margin: 10px auto;
+  border-radius: 5px;
+  width: 50%;
+  box-shadow: 0px 0px 5px #ccc;
+}
+
+button {
+  padding: 5px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+table {
+  width: 80%;
+  margin: auto;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
