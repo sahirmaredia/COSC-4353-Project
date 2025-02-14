@@ -1,0 +1,49 @@
+/* Notification.css */
+.notification-container {
+  position: right;
+  top: 20px; 
+  right: 20px; 
+  z-index: 1000;
+  width: 300px;
+  max-width: 100%;
+}
+
+.notification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  color: #f6f6f6;  /* Dark text for better contrast */
+  font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: rgb(34, 30, 30);  /* White background */
+}
+
+.notification.success {
+  background-color: #4caf50; /* Green */
+  color: white;  /* White text for success */
+}
+
+.notification.error {
+  background-color: #f44336; /* Red */
+  color: white;  /* White text for errors */
+}
+
+.notification.info {
+  background-color: #2196f3; /* Blue */
+  color: white;  /* White text for info */
+}
+
+.close-btn {
+  background: green;
+  border: none;
+  color: white;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #ddd;
+}
