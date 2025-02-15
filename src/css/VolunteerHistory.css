@@ -1,0 +1,27 @@
+/* Banner Section */
+.banner-section {
+    background-color: #e36a6a;
+    width: 100%;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+/* Align Breadcrumbs to the left */
+.banner-section .MuiBreadcrumbs-root {
+    position: absolute;
+    top: 70px;
+    left: 5%;
+    margin-bottom: 10px;
+}
+
+/* Center the heading */
+.banner-section .MuiTypography-h4 {
+    text-align: center;
+    margin-bottom: 0 !important;
+}

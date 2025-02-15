@@ -1,0 +1,201 @@
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+}
+
+/* Banner Section */
+.banner-section {
+    background-color: #e36a6a;
+    width: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+/* Update banner text colors */
+.banner-section .MuiTypography-h4 {
+    text-align: center;
+    margin-bottom: 0 !important;
+}
+
+.banner-section .MuiBreadcrumbs-root {
+    position: absolute;
+    top: 95px;
+    left: 5%;
+    margin-bottom: 10px;
+}
+
+.banner-section .MuiBreadcrumbs-li a,
+.banner-section .MuiBreadcrumbs-li p,
+.banner-section .MuiBreadcrumbs-separator {
+    color: white !important;
+}
+
+/* Container and Layout */
+.MuiContainer-root {
+    padding: 0 20px !important;
+}
+
+/* Typography */
+.MuiTypography-h4 {
+    font-size: 2rem !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    margin-bottom: 20px !important;
+}
+
+.MuiTypography-h6 {
+    font-size: 1.25rem !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    margin-bottom: 10px !important;
+}
+
+.MuiTypography-subtitle1 {
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    color: #1976d2 !important;
+    margin-bottom: 10px !important;
+}
+
+.MuiTypography-body2 {
+    font-size: 0.875rem !important;
+    color: #666 !important;
+}
+
+/* Card */
+.MuiCard-root {
+    background-color: #fff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 20px !important;
+}
+
+.MuiCardContent-root {
+    padding: 20px !important;
+}
+
+/* Form Controls */
+.MuiFormControl-root {
+    margin-bottom: 20px !important;
+}
+
+.MuiInputLabel-root {
+    font-size: 0.875rem !important;
+    color: #666 !important;
+}
+
+.MuiSelect-root {
+    width: 100% !important;
+    background-color: #fff !important;
+}
+
+/* Button */
+.MuiButton-contained {
+    background-color: #1976d2 !important;
+    color: #fff !important;
+    padding: 10px 20px !important;
+    text-transform: uppercase !important;
+    font-weight: 500 !important;
+    transition: background-color 0.3s ease !important;
+}
+
+.MuiButton-contained:hover {
+    background-color: #1565c0 !important;
+}
+
+.MuiButton-contained.Mui-disabled {
+    background-color: #bdbdbd !important;
+}
+
+/* Alert */
+.MuiAlert-root {
+    margin-top: 20px !important;
+}
+
+.MuiAlert-standardSuccess {
+    background-color: #4caf50 !important;
+    color: #fff !important;
+}
+
+/* Chip */
+.MuiChip-root {
+    margin-right: 5px !important;
+    margin-bottom: 5px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+}
+
+.MuiChip-colorSuccess {
+    background-color: #4caf50 !important;
+    color: #fff !important;
+}
+
+.MuiChip-colorDefault {
+    background-color: #e0e0e0 !important;
+    color: #333 !important;
+}
+
+/* Grid */
+.MuiGrid-container {
+    margin: 0 !important;
+    width: 100% !important;
+}
+
+.MuiGrid-item {
+    padding: 12px !important;
+    margin: 0 !important;
+}
+
+/* Paper */
+.MuiPaper-root {
+    background-color: #fff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    padding: 20px !important;
+}
+
+/* Breadcrumbs */
+.MuiBreadcrumbs-root {
+    margin-bottom: 20px !important;
+    font-size: 0.875rem !important;
+    color: #666 !important;
+}
+
+.MuiBreadcrumbs-li a {
+    color: #1976d2 !important;
+    text-decoration: none !important;
+}
+
+.MuiBreadcrumbs-li a:hover {
+    text-decoration: underline !important;
+}
+
+/* Match Score Box */
+.match-score-box {
+    background-color: #e3f2fd;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.match-score-box .MuiTypography-h6 {
+    margin: 0 !important;
+    font-size: 1.25rem !important;
+    color: #1976d2 !important;
+}
+
+.match-score-box .MuiTypography-body2 {
+    margin: 0 !important;
+    font-size: 0.875rem !important;
+    color: #666 !important;
+}
