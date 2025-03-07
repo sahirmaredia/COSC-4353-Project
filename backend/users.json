@@ -1,0 +1,44 @@
+[
+  {
+    "email": "ddg@gmail.com",
+    "password": "$2b$10$7vv.HeFQppCU6CZ/VwnL5u6txYKwECyyVsrzx3obT37LpT5n3DB6y",
+    "role": "admin"
+  },
+  {
+    "email": "test@gmail.com",
+    "password": "$2b$10$YkbEEjwR6u0v6pC/GfF5kesu666HVYRRivVn8PQSkf8J1y.19VaMK",
+    "role": "admin"
+  },
+  {
+    "email": "hello@gmail.com",
+    "password": "$2b$10$laypKTaaB2IaYcc47plyteHS7Um2UKHVRGv3eZ6I6lUQXGB3sMj56"
+  },
+  {
+    "email": "test@example.com",
+    "password": "$2b$10$ZlfSyEPGmcN31M/Z.x2FleSdVxWl/KMRxOAAjGuVCuw6aXUQ7y/dW",
+    "role": "admin",
+    "fullName": "",
+    "address1": "",
+    "address2": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "skills": [],
+    "preferences": "",
+    "availability": []
+  },
+  {
+    "email": "test1741281173154@example.com",
+    "password": "$2b$10$e7RKFEVG9EnP.ZcVw6P9U.g.dbsUj3GKVTn8hG.FfOUoMpg8Dvu5G",
+    "role": "admin",
+    "fullName": "",
+    "address1": "",
+    "address2": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "skills": [],
+    "preferences": "",
+    "availability": []
+  }
+]
