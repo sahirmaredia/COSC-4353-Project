@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './EventForm.css';
 import Notification from './Notification'; 
-
+import axios from 'axios';
 
 
 const EventForm = () => {
@@ -40,24 +40,25 @@ const EventForm = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.eventName || !formData.eventDescription || !formData.eventLocation || formData.requiredSkills.length === 0 || !formData.urgency || !formData.eventDate) {
-      setErrorMessage('Please fill in all required fields.');
-      return;
+    if (!formData.eventName || !formData.eventDescription || !formData.eventLocation ||
+        formData.requiredSkills.length === 0 || !formData.urgency || !formData.eventDate) {
+        setErrorMessage('Please fill in all required fields.');
+        return;
     }
 
-    // Example of triggering notification based on event type
-    // Show notification for a new event assignment
-    showNotification('new-assignment', `New event "${formData.eventName}" has been assigned!`);
-
-    // Simulate form submission
-    setTimeout(() => {
-      navigate('/'); // Redirect to home page after success
-    }, 1000);
-  };
+    try {
+        const response = await axios.post('http://localhost:5000/events', formData);
+        console.log('Event Created:', response.data);
+        showNotification('new-assignment', `New event "${formData.eventName}" has been assigned!`);
+    } catch (error) {
+        console.error('Error:', error);
+        setErrorMessage('Error creating event.');
+    }
+};
 
   // Simulate event update (for demonstration purposes)
   const handleUpdate = () => {
