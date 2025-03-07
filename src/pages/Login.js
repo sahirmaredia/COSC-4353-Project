@@ -7,8 +7,6 @@ function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate(); // Initialize the navigate function
 
-  // Mock user data stored in localStorage for testing
-  const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
 
   // Validate email and password fields
   const validateForm = () => {
@@ -18,36 +16,45 @@ function Login() {
     return "";
   };
 
-  // Check if the entered email and password match an existing account
-  const isUserAuthenticated = (email, password) => {
-    const user = mockUsers.find(user => user.email === email);
-    return user && user.password === password ? user : null;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationError = validateForm();
+    setError(""); // Clear previous errors
 
+    const validationError = validateForm();
     if (validationError) {
       setError(validationError);
       return;
     }
 
-    const user = isUserAuthenticated(email, password);
-    if (!user) {
-      setError("Invalid email or password");
-      return;
+    try {
+      const response = await fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        return;
+      }
+  
+      // Store token in localStorage
+      localStorage.setItem("token", data.token);
+
+      localStorage.setItem("userRole", data.role);
+
+      if(data.role === 'admin'){
+        navigate("/admin");
+      } else{
+     // Redirect to profile page
+     navigate("/profile");
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
+      setError("An error occurred. Please try again.");
     }
-
-    setError(""); // Clear any previous errors
-    console.log("Logging in...", { email, role: user.role });
-
-    // Temporarily store email in localStorage for testing
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userRole", user.role);
-
-    // Redirect to profile page after successful login
-    navigate("/profile");
   };
 
   return (
