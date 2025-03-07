@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 
@@ -76,6 +76,7 @@ const skillsList = [
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     fullName: "",
     address1: "",
@@ -91,6 +92,81 @@ const Profile = () => {
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [dateInput, setDateInput] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch profile data when component mounts
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You are not authenticated.');
+        navigate('/login');
+        return;
+      }
+
+      const storedProfile = localStorage.getItem('userProfile');
+      if (storedProfile) {
+        const parsedProfile = JSON.parse(storedProfile);
+        setProfile(parsedProfile);
+
+          // Convert skills array to react-select format
+          if (Array.isArray(parsedProfile.skills)) {
+            const formattedSkills = parsedProfile.skills.map(skill => ({
+              value: skill,
+              label: skill
+            }));
+            setSelectedSkills(formattedSkills);
+          }
+
+          setLoading(false);
+          return;         
+      }
+
+      const response = await fetch("http://localhost:5000/profile", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+         // Ensure all expected fields exist with safe defaults
+         const safeUserData = {
+          fullName: data.user?.fullName || "",
+          address1: data.user?.address1 || "",
+          address2: data.user?.address2 || "",
+          city: data.user?.city || "",
+          state: data.user?.state || "",
+          zip: data.user?.zip || "",
+          skills: Array.isArray(data.user?.skills) ? data.user.skills : [],
+          preferences: data.user?.preferences || "",
+          availability: Array.isArray(data.user?.availability) ? data.user.availability : [],
+        };
+        setProfile(safeUserData);
+        // Convert skills to the format needed for react-select
+        const formattedSkills = data.user.skills.map(skill => ({
+          value: skill,
+          label: skill
+        }));
+        setSelectedSkills(formattedSkills);
+        setLoading(false);
+      } else {
+        console.error("Failed to fetch profile:", response.statusText);
+        alert("Error fetching profile. Please try again.");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      alert("Something went wrong. Please try again later.");
+      setLoading(false);
+    }
+  };
 
   const validate = () => {
     let newErrors = {};
@@ -109,10 +185,10 @@ const Profile = () => {
     if (!/^\d{5}(-\d{4})?$/.test(profile.zip))
       newErrors.zip = "Enter a valid ZIP code (5 or 9 digits).";
 
-    if (profile.skills.length === 0)
+    if (!profile.skills || profile.skills.length === 0)
       newErrors.skills = "At least one skill selection is required.";
 
-    if (profile.availability.length === 0)
+    if (!profile.availability || profile.availability.length === 0)
       newErrors.availability = "Select at least one availability date.";
 
     setErrors(newErrors);
@@ -120,16 +196,18 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
-    // Clear any stored user data (if applicable)
-    localStorage.removeItem("userToken"); // Example: remove authentication token
+     // Clear any stored user data (if applicable)
+     localStorage.removeItem("token");
+     localStorage.removeItem("userProfile");
     navigate("/login"); // Redirect to login page
   };
 
   const handleSkillsChange = (selectedOptions) => {
+    const skillsValues = selectedOptions.map(option => option.value); // Extract skill values
     setSelectedSkills(selectedOptions);
     setProfile(prev => ({
       ...prev,
-      skills: selectedOptions.map(option => option.value)
+      skills: skillsValues
     }));
   };
 
@@ -177,11 +255,50 @@ const Profile = () => {
     return /^\d{5}(-\d{4})?$/.test(zip);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+       // Retrieve the token here
+       const token = localStorage.getItem('token');
+       if (!token) {
+         alert('You are not authenticated.');
+         return;
+       }
+    
     if (validate()) {
-      console.log("Profile Submitted:", profile);
-      // Submit to backend
+      try {
+        const response = await fetch("http://localhost:5000/profile", { // Change this URL to your backend
+          
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`, // Add JWT token if needed
+          },
+          body: JSON.stringify(profile), // Sending the profile data to the backend
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Profile updated:", data);
+          alert("Profile updated successfully!");
+
+          localStorage.setItem('userProfile', JSON.stringify(data.user));
+              // Ensure skills are properly formatted for the Select component
+              if (Array.isArray(data.user.skills)) {
+                const formattedSkills = data.user.skills.map(skill => ({
+                  value: skill,
+                  label: skill
+                }));
+                setSelectedSkills(formattedSkills);
+           }
+        } else {
+          console.error("Failed to update profile:", response.statusText);
+          alert("Error updating profile. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error submitting profile:", error);
+        alert("Something went wrong. Please try again later.");
+      }
     }
   };
 
@@ -194,6 +311,7 @@ const Profile = () => {
           placeholder="Full Name"
           maxLength="50"
           required
+          value={profile.fullName}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
@@ -205,6 +323,7 @@ const Profile = () => {
           placeholder="Address 1"
           maxLength="100"
           required
+          value={profile.address1}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
@@ -214,6 +333,7 @@ const Profile = () => {
           name="address2"
           placeholder="Address 2 (Optional)"
           maxLength="100"
+          value={profile.address2}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
@@ -224,6 +344,7 @@ const Profile = () => {
           placeholder="City"
           maxLength="100"
           required
+          value={profile.city}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         />
@@ -232,6 +353,7 @@ const Profile = () => {
         <select 
           name="state" 
           required 
+          value={profile.state}
           onChange={handleChange}
           className="w-full p-2 border rounded"
         >
@@ -251,6 +373,7 @@ const Profile = () => {
           maxLength="10"
           minLength="5"
           required
+          value={profile.zip}
           onChange={handleChange}
           onBlur={(e) => {
             if (!validateZip(e.target.value)) {
@@ -264,6 +387,7 @@ const Profile = () => {
         <div className="space-y-2">
           <h4 className="font-medium">Select Skills:</h4>
           <Select
+            name="skills"
             options={skillsList}
             isMulti
             value={selectedSkills}
@@ -278,6 +402,7 @@ const Profile = () => {
 
         <textarea
           name="preferences"
+          value={profile.preferences}
           placeholder="Preferences (Optional)"
           onChange={handleChange}
           className="w-full p-2 border rounded"
@@ -288,6 +413,7 @@ const Profile = () => {
           <label className="block text-sm font-medium">Add Available Dates:</label>
           <div className="flex gap-2">
             <input 
+              name="availableDates"
               type="date" 
               value={dateInput}
               onChange={handleDateChange}
