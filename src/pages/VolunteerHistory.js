@@ -22,27 +22,20 @@ const VolunteerHistory = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // this would be an API call later probably
-        const generateMockHistory = () => {
-            const mockHistory = mockVolunteers.flatMap(volunteer =>
-                mockEvents.map(event => ({
-                    volunteerId: volunteer.id,
-                    volunteerName: volunteer.name,
-                    eventId: event.id,
-                    eventName: event.name,
-                    eventDate: event.date,
-                    location: event.location,
-                    requiredSkills: event.requiredSkills,
-                    urgency: event.urgency,
-                    status: statusOptions[Math.floor(Math.random() * statusOptions.length)]
-                }))
-            );
-
-            setHistory(mockHistory);
-            setIsLoading(false);
+        const fetchHistory = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetch('http://localhost:5000/api/matching/history/all');
+                const data = await response.json();
+                setHistory(data);
+                setIsLoading(false);
+            } catch (error) {
+                console.error('Error fetching history:', error);
+                setIsLoading(false);
+            }
         };
 
-        generateMockHistory();
+        fetchHistory();
     }, []);
 
     const getStatusColor = (status) => {

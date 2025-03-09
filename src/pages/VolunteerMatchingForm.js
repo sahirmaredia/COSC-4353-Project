@@ -33,11 +33,22 @@ const VolunteerMatchingForm = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                setVolunteers(mockVolunteers);
-                setEvents(mockEvents);
-                setIsLoading(false);
+                // Fetch volunteers
+                const volunteersResponse = await fetch('http://localhost:5000/api/volunteers');
+                const volunteersData = await volunteersResponse.json();
+                setVolunteers(volunteersData); // Add this line
+
+                // Fetch events
+                const eventsResponse = await fetch('http://localhost:5000/api/events');
+                const eventsData = await eventsResponse.json();
+                setEvents(eventsData); // Add this line
+
+                setIsLoading(false); // Add this line to end loading state
             } catch (error) {
                 console.error('Error loading data:', error);
+                // Fallback to mock data in case of error
+                setVolunteers(mockVolunteers);
+                setEvents(mockEvents);
                 setIsLoading(false);
             }
         };
@@ -93,11 +104,27 @@ const VolunteerMatchingForm = () => {
         }
     };
 
-    const handleMatch = () => {
+    const handleMatch = async () => {
         if (selectedVolunteer && matchedEvent) {
-            // NEEDED LATER: API call to save the match
-            setNotification('Successfully matched volunteer to event!');
-            setTimeout(() => setNotification(''), 3000);
+            try {
+                const response = await fetch('http://localhost:5000/api/matching', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        volunteerId: selectedVolunteer,
+                        eventId: matchedEvent
+                    })
+                });
+
+                if (response.ok) {
+                    setNotification('Successfully matched volunteer to event!');
+                    setTimeout(() => setNotification(''), 3000);
+                }
+            } catch (error) {
+                console.error('Error creating match:', error);
+            }
         }
     };
 
