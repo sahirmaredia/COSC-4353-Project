@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1741281173687" clover="3.2.0">
-  <project timestamp="1741281173687" name="All files">
+<coverage generated="1741371983200" clover="3.2.0">
+  <project timestamp="1741371983200" name="All files">
     <metrics statements="81" coveredstatements="74" conditionals="68" coveredconditionals="57" methods="10" coveredmethods="10" elements="159" coveredelements="141" complexity="0" loc="81" ncloc="81" packages="1" files="1" classes="1"/>
     <file name="server.js" path="C:\Users\sahir\Documents\Projects\cosc-4353-project\backend\server.js">
       <metrics statements="81" coveredstatements="74" conditionals="68" coveredconditionals="57" methods="10" coveredmethods="10"/>
@@ -30,7 +30,7 @@
       <line num="42" count="1" type="stmt"/>
       <line num="45" count="5" type="cond" truecount="4" falsecount="0"/>
       <line num="46" count="1" type="stmt"/>
-      <line num="50" count="16" type="stmt"/>
+      <line num="50" count="17" type="stmt"/>
       <line num="51" count="4" type="cond" truecount="2" falsecount="0"/>
       <line num="52" count="3" type="stmt"/>
       <line num="56" count="1" type="stmt"/>
@@ -84,7 +84,7 @@
       <line num="181" count="1" type="cond" truecount="2" falsecount="0"/>
       <line num="184" count="1" type="stmt"/>
       <line num="199" count="0" type="stmt"/>
-      <line num="209" count="1" type="stmt"/>
+      <line num="214" count="1" type="stmt"/>
     </file>
   </project>
 </coverage>
