@@ -11,7 +11,21 @@
   },
   {
     "email": "hello@gmail.com",
-    "password": "$2b$10$laypKTaaB2IaYcc47plyteHS7Um2UKHVRGv3eZ6I6lUQXGB3sMj56"
+    "password": "$2b$10$laypKTaaB2IaYcc47plyteHS7Um2UKHVRGv3eZ6I6lUQXGB3sMj56",
+    "fullName": "yessir",
+    "address1": "hello",
+    "city": "hopkins",
+    "state": "IA",
+    "zip": "74567",
+    "skills": [
+      "Construction",
+      "Cooking"
+    ],
+    "preferences": "nada",
+    "availability": [
+      "2025-03-06",
+      "2025-03-24"
+    ]
   },
   {
     "email": "test@example.com",
@@ -31,6 +45,34 @@
     "email": "test1741281173154@example.com",
     "password": "$2b$10$e7RKFEVG9EnP.ZcVw6P9U.g.dbsUj3GKVTn8hG.FfOUoMpg8Dvu5G",
     "role": "admin",
+    "fullName": "",
+    "address1": "",
+    "address2": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "skills": [],
+    "preferences": "",
+    "availability": []
+  },
+  {
+    "email": "test1741371982650@example.com",
+    "password": "$2b$10$aMRRIy7peZqgA.7xIYUIKOZ6GyoPYLihyK2j1ELIj6uKoPdWo9/7y",
+    "role": "admin",
+    "fullName": "",
+    "address1": "",
+    "address2": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "skills": [],
+    "preferences": "",
+    "availability": []
+  },
+  {
+    "email": "volunteer@gmail.com",
+    "password": "$2b$10$LKw.ewSo7te3DDQKdAvnjuzlreKbYKH6bGJi4lgHveIzpsTGV9Hsi",
+    "role": "volunteer",
     "fullName": "",
     "address1": "",
     "address2": "",
