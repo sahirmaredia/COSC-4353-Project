@@ -82,5 +82,19 @@
     "skills": [],
     "preferences": "",
     "availability": []
+  },
+  {
+    "email": "admin@gmail.com",
+    "password": "$2b$10$WoRlpuqnaphDZM/LEV3/LOFyJug6huFNV8M3RHUgJr8uRrfGv47nq",
+    "role": "volunteer",
+    "fullName": "",
+    "address1": "",
+    "address2": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "skills": [],
+    "preferences": "",
+    "availability": []
   }
 ]
