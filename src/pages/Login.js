@@ -18,42 +18,31 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
-
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+  
     try {
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // Send cookies
         body: JSON.stringify({ email, password }),
       });
   
-      const data = await response.json();
-  
       if (!response.ok) {
-        setError(data.message || "Login failed");
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Login failed");
       }
   
-      // Store token in localStorage
-      localStorage.setItem("token", data.token);
-
-      localStorage.setItem("userRole", data.role);
-
-      if(data.role === 'admin'){
-        navigate("/admin");
-      } else{
-     // Redirect to profile page
-     navigate("/profile");
-      }
+      const data = await response.json();
+      console.log("Login successful:", data);
+      alert("Login successful!");
+  
+      // Redirect to profile page
+      navigate("/profile");
     } catch (error) {
       console.error("Error logging in:", error);
-      setError("An error occurred. Please try again.");
+      alert(error.message || "Something went wrong. Please try again.");
     }
   };
 

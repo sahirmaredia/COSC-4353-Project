@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 
+import { jwtDecode } from 'jwt-decode';
 
 const states = [
   { code: "AL", name: "Alabama" },
@@ -101,70 +102,29 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('You are not authenticated.');
-        navigate('/login');
-        return;
-      }
-
-      const storedProfile = localStorage.getItem('userProfile');
-      if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        setProfile(parsedProfile);
-
-          // Convert skills array to react-select format
-          if (Array.isArray(parsedProfile.skills)) {
-            const formattedSkills = parsedProfile.skills.map(skill => ({
-              value: skill,
-              label: skill
-            }));
-            setSelectedSkills(formattedSkills);
-          }
-
-          setLoading(false);
-          return;         
-      }
-
       const response = await fetch("http://localhost:5000/profile", {
         method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
+        credentials: 'include',
       });
-
-      if (response.ok) {
-        const data = await response.json();
-
-         // Ensure all expected fields exist with safe defaults
-         const safeUserData = {
-          fullName: data.user?.fullName || "",
-          address1: data.user?.address1 || "",
-          address2: data.user?.address2 || "",
-          city: data.user?.city || "",
-          state: data.user?.state || "",
-          zip: data.user?.zip || "",
-          skills: Array.isArray(data.user?.skills) ? data.user.skills : [],
-          preferences: data.user?.preferences || "",
-          availability: Array.isArray(data.user?.availability) ? data.user.availability : [],
-        };
-        setProfile(safeUserData);
-        // Convert skills to the format needed for react-select
-        const formattedSkills = data.user.skills.map(skill => ({
-          value: skill,
-          label: skill
-        }));
-        setSelectedSkills(formattedSkills);
-        setLoading(false);
-      } else {
-        console.error("Failed to fetch profile:", response.statusText);
-        alert("Error fetching profile. Please try again.");
-        setLoading(false);
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch profile");
       }
+  
+      const data = await response.json();
+      console.log("Profile data:", data);
+  
+      // Format skills for react-select
+      const formattedSkills = data.user.skills.map(skill => ({
+        value: skill,
+        label: skill,
+      }));
+  
+      setProfile(data.user); // Update the profile state
+      setSelectedSkills(formattedSkills); // Update selectedSkills state
     } catch (error) {
       console.error("Error fetching profile:", error);
-      alert("Something went wrong. Please try again later.");
-      setLoading(false);
+      alert("Something went wrong. Please try again.");
     }
   };
 
@@ -195,11 +155,24 @@ const Profile = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleLogout = () => {
-     // Clear any stored user data (if applicable)
-     localStorage.removeItem("token");
-     localStorage.removeItem("userProfile");
-    navigate("/login"); // Redirect to login page
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/logout", {
+        method: "POST",
+        credentials: 'include', // Send cookies
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to logout");
+      }
+  
+      // Clear local storage and redirect to login
+      localStorage.removeItem("userProfile");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      alert("Something went wrong. Please try again.");
+    }
   };
 
   const handleSkillsChange = (selectedOptions) => {
@@ -257,51 +230,42 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-       // Retrieve the token here
-       const token = localStorage.getItem('token');
-       if (!token) {
-         alert('You are not authenticated.');
-         return;
-       }
-    
-    if (validate()) {
-      try {
-        const response = await fetch("http://localhost:5000/profile", { // Change this URL to your backend
-          
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`, // Add JWT token if needed
-          },
-          body: JSON.stringify(profile), // Sending the profile data to the backend
-        });
   
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Profile updated:", data);
-          alert("Profile updated successfully!");
-
-          localStorage.setItem('userProfile', JSON.stringify(data.user));
-              // Ensure skills are properly formatted for the Select component
-              if (Array.isArray(data.user.skills)) {
-                const formattedSkills = data.user.skills.map(skill => ({
-                  value: skill,
-                  label: skill
-                }));
-                setSelectedSkills(formattedSkills);
-           }
-        } else {
-          console.error("Failed to update profile:", response.statusText);
-          alert("Error updating profile. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error submitting profile:", error);
-        alert("Something went wrong. Please try again later.");
+    if (!validate()) return; // Run validation before submission
+  
+    try {
+      const response = await fetch("http://localhost:5000/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(profile),
+      });
+  
+      const result = await response.json();
+      console.log("Response from server:", result);
+  
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update profile.");
       }
+  
+      // Format skills for react-select
+      const formattedSkills = result.user.skills.map(skill => ({
+        value: skill,
+        label: skill,
+      }));
+  
+      setProfile(result.user); // Update the profile state
+      setSelectedSkills(formattedSkills); // Update selectedSkills state
+  
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert(error.message);
     }
   };
-
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 max-w-2xl mx-auto">
       <div className="space-y-4">

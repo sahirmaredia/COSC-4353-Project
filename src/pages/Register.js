@@ -1,70 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Register() {
-  const navigate = useNavigate(); // Define navigate
-  const [username, setUsername] = useState(""); // Added username field
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState(null); // Default role
+  const [role, setRole] = useState("volunteer"); // Default role
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(""); // Success message state
-
-  /*
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole");
-    // Set role from localStorage if it exists, otherwise set default to "volunteer"
-    setRole(storedRole || "volunteer");
-  }, []);
-*/
+  const [success, setSuccess] = useState("");
 
   // Validate the form input
   const validateForm = () => {
     if (!email.includes("@")) return "Enter a valid email";
     if (password.length < 6) return "Password must be at least 6 characters";
     if (password !== confirmPassword) return "Passwords do not match";
+    if (!role) return "Please select a role";
     return "";
   };
 
-  // Check if the email is already registered
-  /*
-  const isEmailRegistered = (email) => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    return users.some((user) => user.email === email);
-  };
-  */
-
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    setError(""); // Clear any previous errors
-    setSuccess(""); // Clear previous success message
-
+  
     try {
       const response = await fetch("http://localhost:5000/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // Send cookies
         body: JSON.stringify({ email, password, role }),
       });
-
-      const data = await response.json();
-
+  
       if (!response.ok) {
-        setError(data.message || "Registration failed");
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
       }
-
-      setSuccess("Registration successful! Redirecting to login...");
-      setTimeout(() => navigate("/login"), 2000); // Redirect after 2 seconds
+  
+      const data = await response.json();
+      console.log("Registration successful:", data);
+      alert("Registration successful! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
-      setError("Something went wrong. Please try again.");
+      console.error("Error during registration:", error);
+      alert("Something went wrong. Please try again.");
     }
   };
 
@@ -72,6 +51,7 @@ function Register() {
     <div className="container">
       <h2>Register</h2>
       {error && <p className="error">{error}</p>}
+      {success && <p className="success">{success}</p>}
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -116,7 +96,9 @@ function Register() {
             Volunteer
           </label>
         </div>
-        <button type="submit" className="register-btn">Register</button>
+        <button type="submit" className="register-btn">
+          Register
+        </button>
       </form>
     </div>
   );
