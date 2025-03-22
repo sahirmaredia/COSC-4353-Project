@@ -1,8 +1,9 @@
-const { events, matches, volunteers } = require('../data/mockData');
+const eventModel = require('../models/eventModel');
 
 // Get all events
-const getAllEvents = (req, res) => {
+const getAllEvents = async (req, res) => {
     try {
+        const events = await eventModel.getAllEvents();
         return res.status(200).json(events);
     } catch (error) {
         console.error('Error fetching events:', error);
@@ -11,10 +12,10 @@ const getAllEvents = (req, res) => {
 };
 
 // Get event by ID
-const getEventById = (req, res) => {
+const getEventById = async (req, res) => {
     try {
         const { id } = req.params;
-        const event = events.find(e => e.id === id);
+        const event = await eventModel.getEventById(id);
 
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
@@ -28,27 +29,18 @@ const getEventById = (req, res) => {
 };
 
 // Create new event
-const createEvent = (req, res) => {
+const createEvent = async (req, res) => {
     try {
         const { name, description, date, location, requiredSkills, urgency } = req.body;
 
-        // Generate a unique ID (in a real app, this would be handled by the database)
-        const id = `e${events.length + 1}`;
-
-        const newEvent = {
-            id,
+        const newEvent = await eventModel.createEvent({
             name,
             description,
             date,
             location,
             requiredSkills,
-            urgency,
-            status: 'Active',
-            createdAt: new Date().toISOString().split('T')[0]
-        };
-
-        // In a real app, this would be a database insert
-        events.push(newEvent);
+            urgency
+        });
 
         return res.status(201).json(newEvent);
     } catch (error) {
@@ -58,30 +50,28 @@ const createEvent = (req, res) => {
 };
 
 // Update event
-const updateEvent = (req, res) => {
+const updateEvent = async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, date, location, requiredSkills, urgency, status } = req.body;
 
-        const eventIndex = events.findIndex(e => e.id === id);
-
-        if (eventIndex === -1) {
+        // Check if event exists
+        const event = await eventModel.getEventById(id);
+        if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // Update the event (in a real app, this would be a database update)
-        events[eventIndex] = {
-            ...events[eventIndex],
-            name: name || events[eventIndex].name,
-            description: description || events[eventIndex].description,
-            date: date || events[eventIndex].date,
-            location: location || events[eventIndex].location,
-            requiredSkills: requiredSkills || events[eventIndex].requiredSkills,
-            urgency: urgency || events[eventIndex].urgency,
-            status: status || events[eventIndex].status
-        };
+        const updatedEvent = await eventModel.updateEvent(id, {
+            name,
+            description,
+            date,
+            location,
+            requiredSkills,
+            urgency,
+            status
+        });
 
-        return res.status(200).json(events[eventIndex]);
+        return res.status(200).json(updatedEvent);
     } catch (error) {
         console.error('Error updating event:', error);
         return res.status(500).json({ error: 'Failed to update event' });
@@ -89,18 +79,17 @@ const updateEvent = (req, res) => {
 };
 
 // Delete event
-const deleteEvent = (req, res) => {
+const deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const eventIndex = events.findIndex(e => e.id === id);
-
-        if (eventIndex === -1) {
+        // Check if event exists
+        const event = await eventModel.getEventById(id);
+        if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // In a real app, this would be a database delete
-        events.splice(eventIndex, 1);
+        await eventModel.deleteEvent(id);
 
         return res.status(200).json({ message: 'Event deleted successfully' });
     } catch (error) {
@@ -110,47 +99,19 @@ const deleteEvent = (req, res) => {
 };
 
 // Get volunteers for an event
-const getEventVolunteers = (req, res) => {
+const getEventVolunteers = async (req, res) => {
     try {
         const { id } = req.params;
 
         // Check if event exists
-        const event = events.find(e => e.id === id);
-
+        const event = await eventModel.getEventById(id);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // Get all matches for this event
-        const eventMatches = matches.filter(match => match.eventId === id);
+        const volunteers = await eventModel.getEventVolunteers(id);
 
-        // Build volunteer list with details
-        const eventVolunteers = eventMatches.map(match => {
-            const volunteer = volunteers.find(v => v.id === match.volunteerId);
-
-            if (!volunteer) {
-                return {
-                    matchId: match.id,
-                    volunteerId: match.volunteerId,
-                    volunteerName: 'Unknown Volunteer',
-                    status: match.status,
-                    matchScore: match.matchScore
-                };
-            }
-
-            // Don't include sensitive volunteer information
-            return {
-                matchId: match.id,
-                volunteerId: volunteer.id,
-                volunteerName: volunteer.name,
-                location: volunteer.location,
-                skills: volunteer.skills,
-                status: match.status,
-                matchScore: match.matchScore
-            };
-        });
-
-        return res.status(200).json(eventVolunteers);
+        return res.status(200).json(volunteers);
     } catch (error) {
         console.error('Error fetching event volunteers:', error);
         return res.status(500).json({ error: 'Failed to fetch event volunteers' });

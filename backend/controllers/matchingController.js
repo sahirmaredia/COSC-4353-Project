@@ -1,9 +1,11 @@
-const { volunteers, events, matches } = require('../data/mockData');
-const matchingService = require('../services/matchingService');
+const matchingModel = require('../models/matchingModel');
+const volunteerModel = require('../models/volunteerModel');
+const eventModel = require('../models/eventModel');
 
 // Get all matches
-const getAllMatches = (req, res) => {
+const getAllMatches = async (req, res) => {
     try {
+        const matches = await matchingModel.getAllMatches();
         return res.status(200).json(matches);
     } catch (error) {
         console.error('Error fetching matches:', error);
@@ -12,10 +14,10 @@ const getAllMatches = (req, res) => {
 };
 
 // Get match by ID
-const getMatchById = (req, res) => {
+const getMatchById = async (req, res) => {
     try {
         const { id } = req.params;
-        const match = matches.find(m => m.id === id);
+        const match = await matchingModel.getMatchById(id);
 
         if (!match) {
             return res.status(404).json({ error: 'Match not found' });
@@ -29,23 +31,24 @@ const getMatchById = (req, res) => {
 };
 
 // Create a match manually
-const createMatch = (req, res) => {
+const createMatch = async (req, res) => {
     try {
         const { volunteerId, eventId } = req.body;
 
         // Check if volunteer exists
-        const volunteer = volunteers.find(v => v.id === volunteerId);
+        const volunteer = await volunteerModel.getVolunteerById(volunteerId);
         if (!volunteer) {
             return res.status(404).json({ error: 'Volunteer not found' });
         }
 
         // Check if event exists
-        const event = events.find(e => e.id === eventId);
+        const event = await eventModel.getEventById(eventId);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
         // Check if match already exists
+        const matches = await matchingModel.getAllMatches();
         const existingMatch = matches.find(m =>
             m.volunteerId === volunteerId && m.eventId === eventId
         );
@@ -58,27 +61,16 @@ const createMatch = (req, res) => {
         }
 
         // Calculate match score
-        const matchScore = matchingService.calculateMatchScore(volunteer, event);
+        const matchScore = await matchingModel.calculateMatchScore(volunteerId, eventId);
 
-        // Generate a unique ID (in a real app, this would be handled by the database)
-        const id = `m${matches.length + 1}`;
-
-        const now = new Date().toISOString().split('T')[0];
-
-        const newMatch = {
-            id,
+        // Create match
+        const newMatch = await matchingModel.createMatch({
             volunteerId,
             eventId,
-            status: 'Matched',
-            matchScore,
-            createdAt: now,
-            updatedAt: now
-        };
+            matchScore
+        });
 
-        // In a real app, this would be a database insert
-        matches.push(newMatch);
-
-        // Replace notification with console log
+        // Log notification (in a real system, this would store to the notifications table)
         console.log(`Match notification sent to volunteer ${volunteerId} for event ${event.name}`);
 
         return res.status(201).json(newMatch);
@@ -89,7 +81,7 @@ const createMatch = (req, res) => {
 };
 
 // Update match status
-const updateMatchStatus = (req, res) => {
+const updateMatchStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -98,22 +90,17 @@ const updateMatchStatus = (req, res) => {
             return res.status(400).json({ error: 'Invalid status value' });
         }
 
-        const matchIndex = matches.findIndex(m => m.id === id);
-
-        if (matchIndex === -1) {
+        // Check if match exists
+        const match = await matchingModel.getMatchById(id);
+        if (!match) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
-        // Update the match status
-        matches[matchIndex] = {
-            ...matches[matchIndex],
-            status,
-            updatedAt: new Date().toISOString().split('T')[0]
-        };
+        // Update match status
+        const updatedMatch = await matchingModel.updateMatchStatus(id, status);
 
-        // Replace notification with console log
-        const match = matches[matchIndex];
-        const event = events.find(e => e.id === match.eventId);
+        // Log notification (in a real system, this would store to the notifications table)
+        const event = await eventModel.getEventById(match.eventId);
 
         if (status === 'Completed') {
             console.log(`Status update for volunteer ${match.volunteerId}: ${event ? event.name : 'the event'} has been marked as completed`);
@@ -121,7 +108,7 @@ const updateMatchStatus = (req, res) => {
             console.log(`Status update for volunteer ${match.volunteerId}: ${event ? event.name : 'the event'} has been cancelled`);
         }
 
-        return res.status(200).json(matches[matchIndex]);
+        return res.status(200).json(updatedMatch);
     } catch (error) {
         console.error('Error updating match status:', error);
         return res.status(500).json({ error: 'Failed to update match status' });
@@ -129,23 +116,26 @@ const updateMatchStatus = (req, res) => {
 };
 
 // Delete a match
-const deleteMatch = (req, res) => {
+const deleteMatch = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const matchIndex = matches.findIndex(m => m.id === id);
-
-        if (matchIndex === -1) {
+        // Check if match exists
+        const match = await matchingModel.getMatchById(id);
+        if (!match) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
-        // In a real app, this would be a database delete
-        const deletedMatch = matches[matchIndex];
-        matches.splice(matchIndex, 1);
+        // Store match details before deletion for notification purposes
+        const volunteerId = match.volunteerId;
+        const eventId = match.eventId;
 
-        // Replace notification with console log
-        const event = events.find(e => e.id === deletedMatch.eventId);
-        console.log(`Status update for volunteer ${deletedMatch.volunteerId}: match with ${event ? event.name : 'an event'} has been removed`);
+        // Delete match
+        await matchingModel.deleteMatch(id);
+
+        // Log notification (in a real system, this would store to the notifications table)
+        const event = await eventModel.getEventById(eventId);
+        console.log(`Status update for volunteer ${volunteerId}: match with ${event ? event.name : 'an event'} has been removed`);
 
         return res.status(200).json({ message: 'Match deleted successfully' });
     } catch (error) {
@@ -155,18 +145,18 @@ const deleteMatch = (req, res) => {
 };
 
 // Get recommended volunteers for an event
-const getRecommendedVolunteers = (req, res) => {
+const getRecommendedVolunteers = async (req, res) => {
     try {
         const { eventId } = req.params;
 
         // Check if event exists
-        const event = events.find(e => e.id === eventId);
+        const event = await eventModel.getEventById(eventId);
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // Get volunteers with calculated match scores
-        const recommendations = matchingService.findVolunteersForEvent(eventId);
+        // Get recommended volunteers
+        const recommendations = await matchingModel.getRecommendedVolunteers(eventId);
 
         return res.status(200).json(recommendations);
     } catch (error) {
@@ -176,18 +166,18 @@ const getRecommendedVolunteers = (req, res) => {
 };
 
 // Get recommended events for a volunteer
-const getRecommendedEvents = (req, res) => {
+const getRecommendedEvents = async (req, res) => {
     try {
         const { volunteerId } = req.params;
 
         // Check if volunteer exists
-        const volunteer = volunteers.find(v => v.id === volunteerId);
+        const volunteer = await volunteerModel.getVolunteerById(volunteerId);
         if (!volunteer) {
             return res.status(404).json({ error: 'Volunteer not found' });
         }
 
-        // Get events with calculated match scores
-        const recommendations = matchingService.findEventsForVolunteer(volunteerId);
+        // Get recommended events
+        const recommendations = await matchingModel.getRecommendedEvents(volunteerId);
 
         return res.status(200).json(recommendations);
     } catch (error) {
@@ -197,29 +187,14 @@ const getRecommendedEvents = (req, res) => {
 };
 
 // Get all match history
-const getAllMatchHistory = (req, res) => {
+const getAllMatchHistory = async (req, res) => {
     try {
-        // Build comprehensive history with volunteer and event details
-        const history = matches.map(match => {
-            const volunteer = volunteers.find(v => v.id === match.volunteerId);
-            const event = events.find(e => e.id === match.eventId);
+        const history = await matchingModel.getAllMatchHistory();
 
-            return {
-                matchId: match.id,
-                volunteerId: match.volunteerId,
-                volunteerName: volunteer ? volunteer.name : 'Unknown Volunteer',
-                eventId: match.eventId,
-                eventName: event ? event.name : 'Unknown Event',
-                eventDate: event ? event.date : 'Unknown Date',
-                location: event ? event.location : 'Unknown Location',
-                requiredSkills: event ? event.requiredSkills : [],
-                urgency: event ? event.urgency : 'Unknown',
-                status: match.status,
-                matchScore: match.matchScore,
-                createdAt: match.createdAt,
-                updatedAt: match.updatedAt
-            };
-        });
+        console.log('Match History Query Result:', history);
+        if (history.length === 0) {
+            return res.status(404).json({ error: 'No match history found' });
+        }
 
         return res.status(200).json(history);
     } catch (error) {

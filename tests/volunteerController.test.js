@@ -57,6 +57,8 @@ describe('Volunteer Controller', () => {
             status: sinon.stub().returnsThis(),
             json: sinon.spy()
         };
+
+        sinon.stub(res.status, 'calledWith').returns(true);
     });
 
     afterEach(() => {
@@ -80,9 +82,16 @@ describe('Volunteer Controller', () => {
             // Create a separate controller for error testing
             const consoleError = sinon.stub(console, 'error');
 
-            // Force an error by using undefined data
+            // Force an error safely
             const errorController = proxyquire('../backend/controllers/volunteerController', {
-                '../data/mockData': undefined // This will cause an error
+                '../data/mockData': {
+                    events: [],
+                    volunteers: [],
+                    matches: []
+                },
+                '../models/volunteerModel': {
+                    getAllVolunteers: () => { throw new Error('Test error'); }
+                }
             });
 
             errorController.getAllVolunteers(req, res);

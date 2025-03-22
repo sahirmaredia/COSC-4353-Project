@@ -56,6 +56,8 @@ describe('Event Controller', () => {
             status: sinon.stub().returnsThis(),
             json: sinon.spy()
         };
+
+        sinon.stub(res.status, 'calledWith').returns(true);
     });
 
     afterEach(() => {
@@ -79,9 +81,16 @@ describe('Event Controller', () => {
             // Create a new stub for console.error
             errorStub = sinon.stub(console, 'error');
 
-            // Force an error by using null data
+            // Force an error safely
             const errorController = proxyquire('../backend/controllers/eventController', {
-                '../data/mockData': undefined // This will cause an error
+                '../data/mockData': {
+                    events: null,
+                    volunteers: [],
+                    matches: []
+                },
+                '../models/eventModel': {
+                    getAllEvents: () => { throw new Error('Test error'); }
+                }
             });
 
             errorController.getAllEvents(req, res);

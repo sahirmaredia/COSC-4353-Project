@@ -15,10 +15,11 @@ import {
     Paper,
     Breadcrumbs,
     Link,
-    Chip
+    Chip,
+    CircularProgress
 } from '@mui/material';
-import { mockVolunteers, mockEvents, statusOptions } from '../mockData';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { volunteerService, eventService, matchingService } from '../services/api';
 import '../css/VolunteerMatchingForm.css';
 
 const VolunteerMatchingForm = () => {
@@ -28,110 +29,105 @@ const VolunteerMatchingForm = () => {
     const [matchedEvent, setMatchedEvent] = useState('');
     const [notification, setNotification] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [matchScore, setMatchScore] = useState(null);
 
     useEffect(() => {
-        const loadData = async () => {
+        const fetchData = async () => {
             try {
-                // Fetch volunteers
-                const volunteersResponse = await fetch('http://localhost:5000/api/volunteers');
-                const volunteersData = await volunteersResponse.json();
-                setVolunteers(volunteersData); // Add this line
+                const [volunteers, events] = await Promise.all([
+                    volunteerService.getAllVolunteers(),
+                    eventService.getAllEvents()
+                ]);
 
-                // Fetch events
-                const eventsResponse = await fetch('http://localhost:5000/api/events');
-                const eventsData = await eventsResponse.json();
-                setEvents(eventsData); // Add this line
-
-                setIsLoading(false); // Add this line to end loading state
-            } catch (error) {
-                console.error('Error loading data:', error);
-                // Fallback to mock data in case of error
-                setVolunteers(mockVolunteers);
-                setEvents(mockEvents);
+                setVolunteers(volunteers);
+                setEvents(events);
+                setIsLoading(false);
+            } catch (err) {
+                console.error('Error loading data:', err);
+                setError('Failed to load volunteers and events data');
                 setIsLoading(false);
             }
         };
-        loadData();
+
+        fetchData();
     }, []);
 
-    const calculateMatchScore = (volunteer, event) => {
-        if (!volunteer || !event) return 0;
-
-        let score = 0;
-        // Check skills match (60% of total score)
-        const matchingSkills = event.requiredSkills.filter(skill =>
-            volunteer.skills.includes(skill)
-        );
-        score += (matchingSkills.length / event.requiredSkills.length) * 60;
-
-        // Check availability match (40% of total score)
-        if (volunteer.availability.includes(event.date)) {
-            score += 40;
-        }
-
-        return Math.round(score);
-    };
-
-    const handleVolunteerSelect = (event) => {
+    const handleVolunteerSelect = async (event) => {
         const volunteerId = event.target.value;
         setSelectedVolunteer(volunteerId);
+        setMatchedEvent('');
+        setMatchScore(null);
 
-        // Find best matching event
-        const volunteer = volunteers.find(v => v.id === volunteerId);
-        if (volunteer) {
-            const bestMatch = events.reduce((best, current) => {
-                const currentScore = calculateMatchScore(volunteer, current);
-                const bestScore = best ? calculateMatchScore(volunteer, best) : 0;
-                return currentScore > bestScore ? current : best;
-            }, null);
+        if (!volunteerId) return;
 
-            if (bestMatch) {
+        try {
+            const recommendations = await matchingService.getRecommendedEvents(volunteerId);
+
+            if (recommendations.length > 0) {
+                const bestMatch = recommendations[0];
                 setMatchedEvent(bestMatch.id);
-                setMatchScore(calculateMatchScore(volunteer, bestMatch));
+                setMatchScore(bestMatch.matchScore);
             }
+        } catch (err) {
+            console.error('Error getting recommendations:', err);
+            setError('Failed to get recommended events');
         }
     };
 
-    const handleEventSelect = (event) => {
+    const handleEventSelect = async (event) => {
         const eventId = event.target.value;
         setMatchedEvent(eventId);
 
-        const volunteer = volunteers.find(v => v.id === selectedVolunteer);
-        const selectedEvent = events.find(e => e.id === eventId);
-        if (volunteer && selectedEvent) {
-            setMatchScore(calculateMatchScore(volunteer, selectedEvent));
+        if (!selectedVolunteer || !eventId) {
+            setMatchScore(null);
+            return;
+        }
+
+        try {
+            const response = await matchingService.calculateMatchScore(selectedVolunteer, eventId);
+            setMatchScore(response.matchScore);
+        } catch (err) {
+            console.error('Error calculating match score:', err);
+            setMatchScore(null);
         }
     };
 
     const handleMatch = async () => {
-        if (selectedVolunteer && matchedEvent) {
-            try {
-                const response = await fetch('http://localhost:5000/api/matching', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        volunteerId: selectedVolunteer,
-                        eventId: matchedEvent
-                    })
-                });
+        if (!selectedVolunteer || !matchedEvent) return;
 
-                if (response.ok) {
-                    setNotification('Successfully matched volunteer to event!');
-                    setTimeout(() => setNotification(''), 3000);
-                }
-            } catch (error) {
-                console.error('Error creating match:', error);
-            }
+        try {
+            await matchingService.createMatch({
+                volunteerId: selectedVolunteer,
+                eventId: matchedEvent
+            });
+
+            setNotification('Successfully matched volunteer to event!');
+            setTimeout(() => setNotification(''), 3000);
+        } catch (err) {
+            console.error('Error creating match:', err);
+
+            const errorMessage = err.response?.data?.error || 'Failed to create match';
+            setError(errorMessage);
+            setTimeout(() => setError(null), 3000);
         }
     };
 
     if (isLoading) {
         return (
+            <Container maxWidth="lg" sx={{ mt: 4, textAlign: 'center' }}>
+                <CircularProgress />
+                <Typography sx={{ mt: 2 }}>Loading volunteer matching data...</Typography>
+            </Container>
+        );
+    }
+
+    if (error && !notification) {
+        return (
             <Container maxWidth="lg">
-                <Typography sx={{ mt: 4 }}>Loading...</Typography>
+                <Paper elevation={3} sx={{ p: 3, mt: 4, textAlign: 'center' }}>
+                    <Typography color="error">{error}</Typography>
+                </Paper>
             </Container>
         );
     }
@@ -155,147 +151,160 @@ const VolunteerMatchingForm = () => {
                 </Box>
             </div>
 
-        <Container maxWidth="lg">
-            <Paper elevation={3} sx={{ p: 3 }}>
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h6" gutterBottom>
-                                    Match Volunteers to Events
-                                </Typography>
+            <Container maxWidth="lg">
+                <Paper elevation={3} sx={{ p: 3 }}>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 3 }}>
+                            {error}
+                        </Alert>
+                    )}
 
-                                <Box sx={{ mt: 2 }}>
-                                    <FormControl fullWidth sx={{ mb: 2 }}>
-                                        <InputLabel>Volunteer Name</InputLabel>
-                                        <Select
-                                            value={selectedVolunteer}
-                                            label="Volunteer Name"
-                                            onChange={handleVolunteerSelect}
-                                        >
-                                            {volunteers.map((volunteer) => (
-                                                <MenuItem key={volunteer.id} value={volunteer.id}>
-                                                    {volunteer.name} - {volunteer.location}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-
-                                    <FormControl fullWidth sx={{ mb: 2 }}>
-                                        <InputLabel>Matched Event</InputLabel>
-                                        <Select
-                                            value={matchedEvent}
-                                            label="Matched Event"
-                                            onChange={handleEventSelect}
-                                        >
-                                            {events.map((event) => (
-                                                <MenuItem key={event.id} value={event.id}>
-                                                    {event.name} - {event.date}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        Match Volunteers to Events
+                                    </Typography>
 
                                     <Box sx={{ mt: 2 }}>
-                                        <Button
-                                            variant="contained"
-                                            fullWidth
-                                            onClick={handleMatch}
-                                            disabled={!selectedVolunteer || !matchedEvent}
-                                        >
-                                            Match Volunteer to Event
-                                        </Button>
-
-                                        {notification && (
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                                                <CheckCircleIcon sx={{ color: '#4caf50', mr: 1 }} />
-                                                <Typography>{notification}</Typography>
-                                            </Box>
-                                        )}
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                        <Card>
-                            <CardContent>
-                                <Typography variant="h6" gutterBottom>
-                                    Match Details
-                                </Typography>
-
-                                {selectedVolunteerData && (
-                                    <Box sx={{ mb: 3 }}>
-                                        <Typography variant="subtitle1" color="primary">
-                                            Volunteer Details
-                                        </Typography>
-                                        <Box sx={{ mt: 1 }}>
-                                            <Typography>Name: {selectedVolunteerData.name}</Typography>
-                                            <Typography>Location: {selectedVolunteerData.location}</Typography>
-                                            <Box sx={{ mt: 1 }}>
-                                                <Typography component="span">Skills: </Typography>
-                                                {selectedVolunteerData.skills.map(skill => (
-                                                    <Chip
-                                                        key={skill}
-                                                        label={skill}
-                                                        size="small"
-                                                        color={selectedEventData?.requiredSkills.includes(skill) ? "success" : "default"}
-                                                        sx={{ mr: 0.5, mb: 0.5 }}
-                                                    />
+                                        <FormControl fullWidth sx={{ mb: 2 }}>
+                                            <InputLabel>Volunteer Name</InputLabel>
+                                            <Select
+                                                value={selectedVolunteer}
+                                                label="Volunteer Name"
+                                                onChange={handleVolunteerSelect}
+                                            >
+                                                <MenuItem value="">Select a volunteer</MenuItem>
+                                                {volunteers.map((volunteer) => (
+                                                    <MenuItem key={volunteer.id} value={volunteer.id}>
+                                                        {volunteer.name} - {volunteer.location}
+                                                    </MenuItem>
                                                 ))}
+                                            </Select>
+                                        </FormControl>
+
+                                        <FormControl fullWidth sx={{ mb: 2 }}>
+                                            <InputLabel>Matched Event</InputLabel>
+                                            <Select
+                                                value={matchedEvent}
+                                                label="Matched Event"
+                                                onChange={handleEventSelect}
+                                                disabled={!selectedVolunteer}
+                                            >
+                                                <MenuItem value="">Select an event</MenuItem>
+                                                {events.map((event) => (
+                                                    <MenuItem key={event.id} value={event.id}>
+                                                        {event.name} - {event.date}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+
+                                        <Box sx={{ mt: 2 }}>
+                                            <Button
+                                                variant="contained"
+                                                fullWidth
+                                                onClick={handleMatch}
+                                                disabled={!selectedVolunteer || !matchedEvent}
+                                            >
+                                                Match Volunteer to Event
+                                            </Button>
+
+                                            {notification && (
+                                                <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                                                    <CheckCircleIcon sx={{ color: '#4caf50', mr: 1 }} />
+                                                    <Typography>{notification}</Typography>
+                                                </Box>
+                                            )}
+                                        </Box>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={12} md={6}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>
+                                        Match Details
+                                    </Typography>
+
+                                    {selectedVolunteerData && (
+                                        <Box sx={{ mb: 3 }}>
+                                            <Typography variant="subtitle1" color="primary">
+                                                Volunteer Details
+                                            </Typography>
+                                            <Box sx={{ mt: 1 }}>
+                                                <Typography>Name: {selectedVolunteerData.name}</Typography>
+                                                <Typography>Location: {selectedVolunteerData.location}</Typography>
+                                                {selectedVolunteerData.skills && (
+                                                    <Box sx={{ mt: 1 }}>
+                                                        <Typography component="span">Skills: </Typography>
+                                                        {selectedVolunteerData.skills.map(skill => (
+                                                            <Chip
+                                                                key={skill}
+                                                                label={skill}
+                                                                size="small"
+                                                                color={selectedEventData?.requiredSkills?.includes(skill) ? "success" : "default"}
+                                                                sx={{ mr: 0.5, mb: 0.5 }}
+                                                            />
+                                                        ))}
+                                                    </Box>
+                                                )}
+                                                {selectedVolunteerData.availability && (
+                                                    <Typography>
+                                                        Available Dates: {selectedVolunteerData.availability.join(', ')}
+                                                    </Typography>
+                                                )}
                                             </Box>
-                                            <Typography>
-                                                Available Dates: {selectedVolunteerData.availability.join(', ')}
+                                        </Box>
+                                    )}
+
+                                    {selectedEventData && (
+                                        <Box>
+                                            <Typography variant="subtitle1" color="primary">
+                                                Event Details
+                                            </Typography>
+                                            <Box sx={{ mt: 1 }}>
+                                                <Typography>Name: {selectedEventData.name}</Typography>
+                                                <Typography>Description: {selectedEventData.description}</Typography>
+                                                <Typography>Location: {selectedEventData.location}</Typography>
+                                                <Typography>Date: {selectedEventData.date}</Typography>
+                                                <Box sx={{ mt: 1 }}>
+                                                    <Typography component="span">Required Skills: </Typography>
+                                                    {selectedEventData.requiredSkills.map(skill => (
+                                                        <Chip
+                                                            key={skill}
+                                                            label={skill}
+                                                            size="small"
+                                                            color={selectedVolunteerData?.skills?.includes(skill) ? "success" : "default"}
+                                                            sx={{ mr: 0.5, mb: 0.5 }}
+                                                        />
+                                                    ))}
+                                                </Box>
+                                                <Typography>Urgency: {selectedEventData.urgency}</Typography>
+                                            </Box>
+                                        </Box>
+                                    )}
+
+                                    {matchScore !== null && selectedVolunteer && matchedEvent && (
+                                        <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                                            <Typography variant="h6" gutterBottom>
+                                                Match Score: {matchScore}%
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Based on skills, availability, and location
                                             </Typography>
                                         </Box>
-                                    </Box>
-                                )}
-
-                                {selectedEventData && (
-                                    <Box>
-                                        <Typography variant="subtitle1" color="primary">
-                                            Event Details
-                                        </Typography>
-                                        <Box sx={{ mt: 1 }}>
-                                            <Typography>Name: {selectedEventData.name}</Typography>
-                                            <Typography>Description: {selectedEventData.description}</Typography>
-                                            <Typography>Location: {selectedEventData.location}</Typography>
-                                            <Typography>Date: {selectedEventData.date}</Typography>
-                                            <Box sx={{ mt: 1 }}>
-                                                <Typography component="span">Required Skills: </Typography>
-                                                {selectedEventData.requiredSkills.map(skill => (
-                                                    <Chip
-                                                        key={skill}
-                                                        label={skill}
-                                                        size="small"
-                                                        color={selectedVolunteerData?.skills.includes(skill) ? "success" : "default"}
-                                                        sx={{ mr: 0.5, mb: 0.5 }}
-                                                    />
-                                                ))}
-                                            </Box>
-                                            <Typography>Urgency: {selectedEventData.urgency}</Typography>
-                                        </Box>
-                                    </Box>
-                                )}
-
-                                {matchScore !== null && selectedVolunteer && matchedEvent && (
-                                    <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                                        <Typography variant="h6" gutterBottom>
-                                            Match Score: {matchScore}%
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Based on skills and availability
-                                        </Typography>
-                                    </Box>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Paper>
-        </Container>
-    </>
+                </Paper>
+            </Container>
+        </>
     );
 };
 

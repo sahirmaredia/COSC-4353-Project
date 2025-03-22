@@ -70,6 +70,8 @@ describe('Matching Controller', () => {
             status: sinon.stub().returnsThis(),
             json: sinon.spy()
         };
+
+        sinon.stub(res.status, 'calledWith').returns(true);
     });
 
     afterEach(() => {

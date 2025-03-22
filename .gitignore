@@ -5,6 +5,10 @@
 /.pnp
 .pnp.js
 
+#environment
+./backend/.env
+
+
 # testing
 /coverage
 .nyc_output/

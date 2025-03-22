@@ -202,6 +202,25 @@ describe('Matching Service', () => {
             // Create a new stub for this specific test
             const calculateScoreStub = sinon.stub(matchingService, 'calculateMatchScore').returns(0);
 
+            // Force the volunteer skills to mismatch
+            const originalVolunteers = [...mockData.volunteers];
+            const originalEvents = [...mockData.events];
+
+            mockData.volunteers = [{
+                id: 'v1',
+                skills: ['CompleteDifferentSkill'],
+                location: 'DifferentLocation',
+                availability: ['2050-01-01'] // A date far in the future
+            }];
+
+            mockData.events = [{
+                id: 'e1',
+                requiredSkills: ['UniqueSkill'],
+                location: 'UniqueLocation',
+                date: '2023-11-15',
+                status: 'Active'
+            }];
+
             const result = matchingService.findVolunteersForEvent('e1');
 
             // The result should be an empty array if all scores are zero
@@ -209,6 +228,10 @@ describe('Matching Service', () => {
             expect(result.length).to.equal(0);
 
             calculateScoreStub.restore();
+
+            // Restore the original data
+            mockData.volunteers = originalVolunteers;
+            mockData.events = originalEvents;
         });
     });
 
